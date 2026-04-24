@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>副業診断ツール🐰 by ぴょんこ</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans',Meiryo,sans-serif;background:#fdf6f0;color:#3d2e2e;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+  .card{background:white;border-radius:24px;padding:2rem;max-width:560px;width:100%;box-shadow:0 4px 24px rgba(0,0,0,0.08)}
+  .top-label{font-size:12px;color:#9b8a8a;margin-bottom:0.5rem;letter-spacing:0.05em}
+  .title{font-size:20px;font-weight:700;color:#3d2e2e;margin-bottom:1.5rem;line-height:1.4}
+  .progress-bar{height:4px;background:#f0e8e8;border-radius:2px;margin-bottom:1.5rem}
+  .progress-fill{height:4px;background:#7F77DD;border-radius:2px;transition:width 0.3s}
+  .q-label{font-size:12px;color:#9b8a8a;margin-bottom:0.5rem}
+  .q-text{font-size:17px;font-weight:700;color:#3d2e2e;margin-bottom:1.25rem;line-height:1.5}
+  .options{display:flex;flex-direction:column;gap:8px}
+  .opt-btn{background:white;border:1.5px solid #e8e0e0;border-radius:12px;padding:13px 16px;font-size:14px;color:#3d2e2e;text-align:left;cursor:pointer;transition:all 0.15s;font-family:inherit}
+  .opt-btn:hover{background:#f5f0ff;border-color:#7F77DD}
+  .opt-btn.selected{background:#EEEDFE;border-color:#7F77DD;color:#3C3489;font-weight:700}
+  .nav{display:flex;justify-content:space-between;align-items:center;margin-top:1.25rem}
+  .btn-back{background:none;border:none;font-size:13px;color:#9b8a8a;cursor:pointer;padding:8px 0;font-family:inherit}
+  .btn-next{background:white;border:1.5px solid #e8e0e0;border-radius:12px;padding:11px 28px;font-size:14px;color:#3d2e2e;cursor:pointer;font-family:inherit;font-weight:700;transition:all 0.15s}
+  .btn-next.primary{background:#7F77DD;border-color:#7F77DD;color:white}
+  .btn-next:disabled{opacity:0.4;cursor:not-allowed}
+  .result-header{font-size:13px;color:#9b8a8a;margin-bottom:1rem}
+  .result-card{background:white;border:1.5px solid #e8e0e0;border-radius:16px;padding:1.25rem;margin-bottom:12px}
+  .rank-badge{display:inline-block;font-size:11px;font-weight:700;padding:3px 12px;border-radius:20px;margin-bottom:8px}
+  .rank-1{background:#EEEDFE;color:#3C3489}
+  .rank-2{background:#E1F5EE;color:#085041}
+  .rank-3{background:#FAEEDA;color:#633806}
+  .result-title{font-size:16px;font-weight:700;color:#3d2e2e;margin-bottom:6px}
+  .result-reason{font-size:13px;color:#6b5757;line-height:1.8;margin-bottom:10px}
+  .result-tags{display:flex;gap:6px;flex-wrap:wrap}
+  .tag{font-size:11px;padding:3px 10px;border-radius:20px;background:#f5f0f0;color:#9b8a8a;border:1px solid #e8e0e0}
+  .retry-btn{background:none;border:1.5px solid #e8e0e0;border-radius:12px;padding:11px 20px;font-size:13px;color:#9b8a8a;cursor:pointer;margin-top:1rem;width:100%;font-family:inherit}
+  .retry-btn:hover{background:#f5f0f0}
+  .footer-note{font-size:11px;color:#c9b0b0;text-align:center;margin-top:1rem;line-height:1.7}
+  .footer-note a{color:#7F77DD;text-decoration:none}
+</style>
+</head>
+<body>
+<div class="card">
+  <p class="top-label">🐰 ぴょんこの副業診断</p>
+  <p class="title" id="main-title">あなたに合った副業を見つけよう</p>
+  <div class="progress-bar"><div class="progress-fill" id="prog"></div></div>
+  <div id="quiz-area"></div>
+</div>
+
+<script>
+const questions=[
+  {q:"使える時間は週どのくらい？",opts:["週5時間以内","週10時間くらい","週20時間以上","ほぼフルタイムで動ける"]},
+  {q:"初期投資できる金額は？",opts:["ゼロ円（完全無料で始めたい）","〜1万円まで","〜5万円まで","それ以上も可"]},
+  {q:"今の状況は？",opts:["主婦・主夫（育児・家事中心）","会社員・副業として","フリーランス・個人事業主","学生"]},
+  {q:"得意なことは？（一番近いもの）",opts:["文章を書くのが得意","デザイン・クリエイティブ系","IT・プログラミング系","語学（英語など）が得意","特になし・これから学ぶ"]},
+  {q:"英語は使える？",opts:["日常会話レベル以上","読み書きならなんとか","ほぼ使えない","ネイティブレベル"]},
+  {q:"人と関わる仕事は好き？",opts:["得意・むしろ好き","苦手・できれば避けたい","どちらでもOK"]},
+  {q:"コツコツ続けるのは得意？",opts:["得意・継続は得意な方","苦手・飽き性","案件単位でメリハリある方が好き"]},
+  {q:"新しいツールを試すのは？",opts:["大好き・すぐ試す","ちょっと苦手だけど頑張れる","できれば避けたい"]},
+  {q:"クライアントワーク（依頼を受ける仕事）はOK？",opts:["OK・むしろ好き","できればしたくない","どちらでもOK"]},
+  {q:"最優先したいのは？",opts:["とにかく早く稼ぎたい","長期的に安定した収入","楽しみながら続けたい","まず経験・スキルを積みたい"]}
+];
+
+const fukugyos=[
+  {name:"Canvaテンプレート販売（Etsy・BASE）",tags:["ストック型","デザイン","海外OK"],score:(a)=>{let s=0;if(a[0]<=1)s+=2;if(a[1]<=2)s+=1;if(a[3]===1)s+=3;if(a[6]===0)s+=2;if(a[8]===1)s+=2;if(a[9]===0||a[9]===2)s+=1;return s;},reason:"デザインスキルを活かしてストック型で稼げる。一度作れば繰り返し収益になるのが強み。Etsyなら海外にも販売できる。"},
+  {name:"noteデジタルコンテンツ販売",tags:["ストック型","文章","初期投資ゼロ"],score:(a)=>{let s=0;if(a[1]===0)s+=3;if(a[3]===0)s+=3;if(a[6]===0)s+=2;if(a[8]===1)s+=2;if(a[9]===2)s+=1;return s;},reason:"文章力があれば初期投資ゼロで始められる。プロンプト集・テンプレ・ノウハウをnoteで販売してストック収入を作れる。"},
+  {name:"プロンプト集・AI教材販売",tags:["ストック型","AI活用","初心者OK"],score:(a)=>{let s=0;if(a[1]<=1)s+=2;if(a[7]===0)s+=3;if(a[3]===0||a[3]===4)s+=2;if(a[8]===1)s+=2;return s;},reason:"AIツールが好きな人に最適。自分が学んだことをそのまま商品にできる。初心者目線が強みになる。"},
+  {name:"Kindle電子書籍出版（KDP）",tags:["ストック型","文章","長期安定"],score:(a)=>{let s=0;if(a[3]===0)s+=3;if(a[6]===0)s+=2;if(a[9]===1)s+=3;if(a[8]===1)s+=1;return s;},reason:"一度出版すれば長期的に収益が入るストック型。文章が得意でコツコツ書ける人に向いている。"},
+  {name:"AI×ブログアフィリエイト",tags:["ストック型","長期安定","SEO"],score:(a)=>{let s=0;if(a[0]>=1)s+=1;if(a[3]===0)s+=2;if(a[6]===0)s+=3;if(a[9]===1)s+=3;if(a[8]===1)s+=1;return s;},reason:"時間をかけてコツコツ記事を積み上げる長期型。Claudeで記事を量産して検索流入からアフィリエイト収益を得る。"},
+  {name:"Fiverr（海外クライアント向けサービス）",tags:["クライアントワーク","海外","英語活用"],score:(a)=>{let s=0;if(a[4]<=1)s+=3;if(a[5]===0)s+=2;if(a[8]===0||a[8]===2)s+=3;if(a[3]<=2)s+=1;return s;},reason:"英語が使えて人と関わるのが好きな人向け。海外クライアントから直接依頼を受けてサービスを提供する。"},
+  {name:"Upwork（海外フリーランス案件）",tags:["クライアントワーク","海外","高単価"],score:(a)=>{let s=0;if(a[4]<=1)s+=3;if(a[2]>=1)s+=1;if(a[3]===2)s+=3;if(a[8]===0||a[8]===2)s+=3;if(a[9]===0)s+=2;return s;},reason:"ITスキルや専門スキルがあって英語が使える人向けの高単価案件プラットフォーム。"},
+  {name:"翻訳・ローカライズ",tags:["語学","クライアントワーク","安定"],score:(a)=>{let s=0;if(a[3]===3)s+=5;if(a[4]<=1)s+=3;if(a[8]===0||a[8]===2)s+=2;return s;},reason:"語学力が直接武器になる副業。日本語×英語の翻訳やローカライズはAI時代でも需要が高い。"},
+  {name:"POD販売（Redbubble・Merch by Amazon）",tags:["ストック型","デザイン","海外OK"],score:(a)=>{let s=0;if(a[3]===1)s+=3;if(a[1]===0)s+=2;if(a[6]===0)s+=2;if(a[8]===1)s+=2;if(a[4]<=1)s+=1;return s;},reason:"デザインを登録するだけで世界中に販売できる。在庫なし・完全ストック型でリスクゼロ。"},
+  {name:"AIツールレビューアフィリエイト",tags:["AI好き","アフィリエイト","ストック型"],score:(a)=>{let s=0;if(a[7]===0)s+=3;if(a[3]===0||a[3]===2)s+=2;if(a[6]===0)s+=1;if(a[9]===1)s+=2;return s;},reason:"AIツールを試すのが好きな人向け。使ってみた感想を記事やSNSで発信してアフィリエイト収益を得る。"},
+  {name:"スレッズ×有料マガジン・メルマガ",tags:["SNS","文章","月額課金"],score:(a)=>{let s=0;if(a[3]===0)s+=2;if(a[6]===0)s+=2;if(a[9]===1||a[9]===2)s+=2;if(a[8]===1)s+=1;return s;},reason:"SNSで発信しながら有料マガジンやメルマガで月額課金。コツコツ発信が得意な人に向いている。"},
+  {name:"オンライン診断ツール・テンプレート販売",tags:["デジタル商品","AI活用","ユニーク"],score:(a)=>{let s=0;if(a[3]===1||a[3]===2)s+=2;if(a[7]===0)s+=2;if(a[8]===1)s+=2;if(a[9]===0)s+=2;return s;},reason:"デザインやITスキルがある人が差別化できるデジタル商品。診断ツールやテンプレートをnoteやBASEで販売。"},
+  {name:"YouTube×AI解説チャンネル",tags:["動画","AI","長期"],score:(a)=>{let s=0;if(a[0]>=2)s+=2;if(a[7]===0)s+=2;if(a[9]===2||a[9]===3)s+=2;if(a[6]===0)s+=1;return s;},reason:"時間に余裕があってAI好きな人向け。AIツールの解説動画で長期的に収益化できる。"},
+  {name:"AIコンサル・個別相談",tags:["高単価","人と関わる","経験者向け"],score:(a)=>{let s=0;if(a[5]===0)s+=3;if(a[8]===0||a[8]===2)s+=3;if(a[9]===0)s+=2;if(a[2]>=1)s+=1;return s;},reason:"AI活用の経験を積んだ後に高単価で個別相談を受ける形。人と関わるのが好きで経験を活かしたい人向け。"},
+  {name:"Etsy×デジタル印刷物販売",tags:["ストック型","海外","デザイン"],score:(a)=>{let s=0;if(a[3]===1)s+=3;if(a[4]<=1)s+=2;if(a[1]<=1)s+=2;if(a[8]===1)s+=2;if(a[6]===0)s+=1;return s;},reason:"英語圏向けに招待状・カード・プランナーなどのデジタル印刷物を販売。デザイン力と海外展開が強みになる。"}
+];
+
+let answers=new Array(questions.length).fill(null);
+let current=0;
+let showResult=false;
+
+function calcResults(){
+  return fukugyos.map(f=>({...f,s:f.score(answers)})).sort((a,b)=>b.s-a.s).slice(0,3);
+}
+
+function render(){
+  const qa=document.getElementById('quiz-area');
+  const prog=document.getElementById('prog');
+  const mt=document.getElementById('main-title');
+  if(showResult){
+    prog.style.width='100%';
+    mt.textContent='あなたにおすすめの副業TOP3🐰';
+    const top3=calcResults();
+    const ranks=['1位','2位','3位'];
+    const rankClass=['rank-1','rank-2','rank-3'];
+    qa.innerHTML=`
+      <p class="result-header">10問の回答をもとに診断しました</p>
+      ${top3.map((f,i)=>`
+        <div class="result-card">
+          <span class="rank-badge ${rankClass[i]}">${ranks[i]}</span>
+          <div class="result-title">${f.name}</div>
+          <div class="result-reason">${f.reason}</div>
+          <div class="result-tags">${f.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
+        </div>
+      `).join('')}
+      <button class="retry-btn" onclick="restart()">もう一度診断する</button>
+      <p class="footer-note">🐰 ぴょんこのnote・スレッズでAI副業の実践を発信中</p>
+    `;
+    return;
+  }
+  prog.style.width=((current/questions.length)*100)+'%';
+  mt.textContent='あなたに合った副業を見つけよう';
+  const q=questions[current];
+  qa.innerHTML=`
+    <p class="q-label">質問 ${current+1} / ${questions.length}</p>
+    <p class="q-text">${q.q}</p>
+    <div class="options">
+      ${q.opts.map((o,i)=>`<button class="opt-btn${answers[current]===i?' selected':''}" onclick="select(${i})">${o}</button>`).join('')}
+    </div>
+    <div class="nav">
+      <button class="btn-back" onclick="back()" style="${current===0?'visibility:hidden':''}">← 戻る</button>
+      <button class="btn-next${answers[current]!==null?' primary':''}" onclick="next()" ${answers[current]===null?'disabled':''}>
+        ${current===questions.length-1?'結果を見る →':'次へ →'}
+      </button>
+    </div>
+  `;
+}
+
+function select(i){answers[current]=i;render();}
+function next(){if(answers[current]===null)return;if(current===questions.length-1){showResult=true;}else{current++;}render();}
+function back(){if(current>0){current--;render();}}
+function restart(){answers=new Array(questions.length).fill(null);current=0;showResult=false;render();}
+
+render();
+</script>
+</body>
+</html>
